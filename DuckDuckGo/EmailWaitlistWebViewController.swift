@@ -40,7 +40,12 @@ class EmailWaitlistWebViewController: UIViewController, WKNavigationDelegate {
 
     private lazy var autofillUserScript: AutofillUserScript = {
         // GPC value doesn't matter here as the Autofill script doesn't use it
-        let prefs = ContentScopeProperties(gpcEnabled: true, sessionKey: UUID().uuidString)
+        let prefs = ContentScopeProperties(gpcEnabled: true,
+                                           sessionKey: UUID().uuidString,
+                                           featureToggles:
+                                            ContentScopeFeatureToggles(emailProtection: true,
+                                                                       credentialsAutofill: true, identitiesAutofill: false, creditCardsAutofill: false,
+                                                                       credentialsSaving: false, passwordGeneration: false))
         let script = AutofillUserScript(
             scriptSourceProvider: DefaultAutofillSourceProvider(privacyConfigurationManager: ContentBlocking.privacyConfigurationManager,
                                                                 properties: prefs))

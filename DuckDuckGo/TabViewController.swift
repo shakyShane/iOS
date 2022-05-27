@@ -188,7 +188,12 @@ class TabViewController: UIViewController {
     }()
     
     lazy var autofillUserScript: BrowserServicesKit.AutofillUserScript = {
-        let prefs = ContentScopeProperties(gpcEnabled: appSettings.sendDoNotSell, sessionKey: UUID().uuidString)
+        let prefs = ContentScopeProperties(gpcEnabled: appSettings.sendDoNotSell, sessionKey: UUID().uuidString,
+                                           featureToggles:
+                                            ContentScopeFeatureToggles(emailProtection: true,
+                                                                       credentialsAutofill: true,
+                                                                       identitiesAutofill: false, creditCardsAutofill: false,
+                                                                       credentialsSaving: false, passwordGeneration: false))
         let provider = DefaultAutofillSourceProvider(privacyConfigurationManager: ContentBlocking.privacyConfigurationManager, properties: prefs)
         let autofillUserScript = AutofillUserScript(scriptSourceProvider: provider)
         return autofillUserScript
@@ -1918,16 +1923,16 @@ extension TabViewController: SecureVaultManagerDelegate {
     func secureVaultManager(_: SecureVaultManager,
                             promptUserToAutofillCredentialsForDomain domain: String,
                             withAccounts accounts: [SecureVaultModels.WebsiteAccount],
-                            completionHandler: @escaping (SecureVaultModels.WebsiteAccount?) -> Void) {
+                            completionHandler: @escaping (SecureVaultModels.WebsiteAccount?, PromptUserToAutofillCredentialsCompletionAction) -> Void) {
   
         if !isAutofillEnabled {
-            completionHandler(nil)
+            completionHandler(nil, .none)
             return
         }
         
         if #available(iOS 14, *), accounts.count > 0 {
-            let autofillPromptViewController = AutofillLoginPromptViewController(accounts: accounts) { account in
-                completionHandler(account)
+            let autofillPromptViewController = AutofillLoginPromptViewController(accounts: accounts) { account, action in
+                completionHandler(account, action)
             }
             
             if #available(iOS 15.0, *) {
@@ -1937,7 +1942,7 @@ extension TabViewController: SecureVaultManagerDelegate {
             }
             self.present(autofillPromptViewController, animated: true, completion: nil)
         } else {
-            completionHandler(nil)
+            completionHandler(nil, .presentKeyboard)
         }
     }
 
